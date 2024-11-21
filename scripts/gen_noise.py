@@ -7,7 +7,7 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 
-def generate_noise_floor(length1, length2, wavelength=500e-9, noise_level=0.1, output_csv='noise_floor.csv'):
+def generate_noise_floor(length1, length2, noise_level=0.1):
     """
     Generate, plot, and export the noise floor data for a Michelson interferometer.
 

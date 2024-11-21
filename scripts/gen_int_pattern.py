@@ -2,7 +2,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import pandas as pd
 
-def generate_interference_pattern(length1, length2, wavelength=500e-9, output_csv='interference_pattern.csv'):
+def generate_interference_pattern(length1, length2, wavelength=633e-9):
     """
     Generate and plot the interference pattern for a Michelson interferometer and export the data to a CSV file.
 
