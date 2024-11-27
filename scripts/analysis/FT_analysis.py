@@ -105,7 +105,7 @@ def process_datasets(input_dir, output_dir, sampling_rate, save_plots):
 
 # Example usage
 input_dir = '../../data/FinalData'
-output_dir = '../../data/FinalData/Plots'
+output_dir = '../../data/FinalData/FFT_Plots'
 sampling_rate = 1000  # Assuming a sampling rate of 1000 Hz for the example
 
 # Prompt the user whether to save the plots or display them
