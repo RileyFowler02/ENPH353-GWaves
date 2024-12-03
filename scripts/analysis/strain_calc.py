@@ -6,7 +6,9 @@ import os
 # Constants
 wavelength = 632.8e-9  # Wavelength of the laser in meters
 I0 = 1  # Maximum intensity (assuming normalized intensity)
-arm_length = 1.0  # Length of the interferometer arm in meters
+arm_length = 1.43  # Length of the interferometer arm in meters
+error_intensity = 0.025  # 0.5% error on intensity measurements
+error_length = 0.025  # 0.5% error on length measurements
 
 def normalize_intensity(intensity):
     """
@@ -50,6 +52,22 @@ def calculate_strain(displacement, arm_length):
     strain = displacement / arm_length
     return strain
 
+def error_propagation(intensity, displacement, arm_length):
+    """
+    Perform error propagation to calculate the error in strain.
+
+    Parameters:
+    - intensity: Signal intensity array
+    - displacement: Displacement array in meters
+    - arm_length: Length of the interferometer arm in meters
+
+    Returns:
+    - error_strain: Error in strain array
+    """
+    error_displacement = (wavelength / (4 * np.pi)) * (1 / np.sqrt(1 - ((intensity - I0) / I0)**2)) * error_intensity
+    error_strain = np.sqrt((error_displacement / arm_length)**2 + (displacement * error_length / arm_length**2)**2)
+    return error_strain
+
 def load_data(file_path):
     """
     Load data from a CSV file.
@@ -66,21 +84,37 @@ def load_data(file_path):
     intensity = data['Signal'].values
     return time, intensity
 
-def plot_strain(time, strain, output_path=None):
+def plot_strain(time, strain, error_strain, output_path=None):
     """
-    Plot the strain.
+    Plot the strain with error lines.
 
     Parameters:
     - time: Time array
     - strain: Strain array
+    - error_strain: Error in strain array
     - output_path: Path to save the plot image (if None, display the plot)
     """
+    # Remove points with infinite values in the error
+    finite_mask = np.isfinite(error_strain)
+    time_finite = time[finite_mask]
+    strain_finite = strain[finite_mask]
+    error_strain_finite = error_strain[finite_mask]
+
     plt.figure(figsize=(10, 6))
-    plt.plot(time, strain)
-    plt.title('Strain of the Interferometer Arm')
+    plt.plot(time_finite, strain_finite, label='Strain')
+    
+    # Calculate the positive and negative error curves
+    strain_plus = strain_finite + error_strain_finite
+    strain_minus = strain_finite - error_strain_finite
+
+    plt.plot(time_finite, strain_plus, label='Positive Error', linestyle='--', color='grey', linewidth = 0.5)
+    plt.plot(time_finite, strain_minus, label='Negative Error', linestyle='--', color='grey', linewidth = 0.5)
+
+    plt.title('Strain of the Interferometer Arm with Error Lines')
     plt.xlabel('Time')
     plt.ylabel('Strain')
     plt.grid(True)
+    plt.legend()
     
     if output_path:
         plt.savefig(output_path)
@@ -119,11 +153,15 @@ def process_datasets(input_dir, output_dir):
         # Calculate the strain
         strain = calculate_strain(displacement, arm_length)
 
-        # Plot the strain
-        plot_strain(time, strain, output_path)
+        # Perform error propagation
+        error_strain = error_propagation(normalized_intensity, displacement, arm_length)
 
-        # Print the first few strain values
+        # Plot the strain with error lines
+        plot_strain(time, strain, error_strain, output_path)
+
+        # Print the first few strain values and their errors
         print(f"Strain values for {filename}: {strain[:5]}")
+        print(f"Error in strain for {filename}: {error_strain[:5]}")
 
 # Example usage
 input_dir = '../../data/FinalData'

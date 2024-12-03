@@ -18,7 +18,7 @@ def sine(x, amp, freq, phase):
     Returns:
     - Sine wave output
     """
-    offset = -0.5  # Fixed offset
+    offset = 0  # Fixed offset
     return amp * np.sin(2 * np.pi * freq * x + phase) + offset
 
 def fit_sine(time, signal):
@@ -31,17 +31,24 @@ def fit_sine(time, signal):
 
     Returns:
     - popt: Optimal values for the parameters
-    - pcov: Covariance of the parameters
+    - perr: Standard deviation errors of the parameters
+    - chi_squared: Chi-squared value of the fit
     """
     # Initial guess for the parameters
     guess_amplitude = 6  # np.std(signal) * 2**0.5
-    guess_frequency = 450
+    guess_frequency = 400
     guess_phase = np.pi / 4
     p0 = [guess_amplitude, guess_frequency, guess_phase]
 
     # Fit the sine wave
     popt, pcov = curve_fit(sine, time, signal, p0=p0)
-    return popt, pcov
+    perr = np.sqrt(np.diag(pcov))  # Calculate the standard deviation errors
+
+    # Calculate the chi-squared value
+    residuals = signal - sine(time, *popt)
+    chi_squared = np.sum((residuals ** 2) / signal)
+
+    return popt, perr, chi_squared
 
 def plot_fit(time, signal, popt, output_path):
     """
@@ -86,7 +93,7 @@ def process_files(input_dir, output_dir):
         signal = data['Signal'].values
 
         # Fit a sine wave to the data
-        popt, pcov = fit_sine(time, signal)
+        popt, perr, chi_squared = fit_sine(time, signal)
 
         # Generate output plot path
         file_name = os.path.basename(file_path)
@@ -95,8 +102,13 @@ def process_files(input_dir, output_dir):
         # Plot the original data and the fitted sine wave
         plot_fit(time, signal, popt, output_path)
 
-        # Print the optimal parameters
-        print(f"Optimal parameters for {file_name}: Amplitude={popt[0]}, Frequency={popt[1]}, Phase={popt[2]}, Offset=-0.5")
+        # Print the optimal parameters, their errors, and the chi-squared value
+        print(f"Optimal parameters for {file_name}:")
+        print(f"  Amplitude = {popt[0]} ± {perr[0]}")
+        print(f"  Frequency = {popt[1]} ± {perr[1]}")
+        print(f"  Phase = {popt[2]} ± {perr[2]}")
+        print(f"  Offset = -0.5 (fixed)")
+        print(f"  Chi-squared = {chi_squared}")
 
 # Example usage
 input_dir = '../../data/FinalData'

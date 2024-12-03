@@ -61,6 +61,7 @@ def plot_frequency_spectrum(freqs, magnitude, output_path=None):
     plt.xlabel('Frequency (Hz)')
     plt.ylabel('Magnitude')
     plt.grid(True)
+    plt.xlim(0, 5000)  # Adjust the x-axis limit to focus on the range of interest
     
     if output_path:
         plt.savefig(output_path)
@@ -68,6 +69,24 @@ def plot_frequency_spectrum(freqs, magnitude, output_path=None):
         print(f"Saved plot to {output_path}")
     else:
         plt.show()
+
+def calculate_dominant_frequency(freqs, magnitude, error_percentage=0.005):
+    """
+    Calculate the dominant frequency and its error.
+
+    Parameters:
+    - freqs: Frequencies corresponding to the FT
+    - magnitude: Magnitude of the FT
+    - error_percentage: Percentage error for all measurements
+
+    Returns:
+    - dominant_freq: Dominant frequency
+    - error_freq: Error in the dominant frequency
+    """
+    dominant_index = np.argmax(magnitude)
+    dominant_freq = freqs[dominant_index]
+    error_freq = dominant_freq * error_percentage
+    return dominant_freq, error_freq
 
 def process_datasets(input_dir, output_dir, sampling_rate, save_plots):
     """
@@ -100,13 +119,17 @@ def process_datasets(input_dir, output_dir, sampling_rate, save_plots):
             # Plot the frequency spectrum
             plot_frequency_spectrum(freqs, magnitude, output_path)
 
+            # Calculate the dominant frequency and its error
+            dominant_freq, error_freq = np.abs(calculate_dominant_frequency(freqs, magnitude))
+            print(f"Dominant frequency for {filename}: {dominant_freq:.2f} Hz ± {error_freq:.2f} Hz")
+
         except Exception as e:
             print(f"Error processing {file_path}: {e}")
 
 # Example usage
 input_dir = '../../data/FinalData'
 output_dir = '../../data/FinalData/FFT_Plots'
-sampling_rate = 1000  # Assuming a sampling rate of 1000 Hz for the example
+sampling_rate = 250000 # Taken from oscilloscope info in the initial CSV files
 
 # Prompt the user whether to save the plots or display them
 save_plots_input = input("Do you want to save the plots to files? (yes/no): ").strip().lower()
